@@ -3,10 +3,10 @@ locals {
   thanos = merge(
     local.helm_defaults,
     {
-      name                      = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].name
-      chart                     = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].name
-      repository                = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].repository
-      chart_version             = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].version
+      name                      = "thanos"
+      chart                     = local.helm_dependencies[index(local.helm_dependencies.*.name, "oci://registry-1.docker.io/bitnamicharts/thanos")].name
+      repository                = ""
+      chart_version             = local.helm_dependencies[index(local.helm_dependencies.*.name, "oci://registry-1.docker.io/bitnamicharts/thanos")].version
       namespace                 = "monitoring"
       create_iam_resources_irsa = true
       iam_policy_override       = null
@@ -18,6 +18,7 @@ locals {
       create_bucket             = false
       bucket                    = "thanos-store-${var.cluster-name}"
       bucket_force_destroy      = false
+      bucket_enforce_tls        = false
       generate_ca               = false
       trusted_ca_content        = null
       name_prefix               = "${var.cluster-name}-thanos"
@@ -267,17 +268,19 @@ module "thanos_bucket" {
   create_bucket = local.thanos["enabled"] && local.thanos["create_bucket"]
 
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 3.0"
+  version = "~> 4.0"
 
-  block_public_acls       = true
-  block_public_policy     = true
-  restrict_public_buckets = true
-  ignore_public_acls      = true
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
 
   force_destroy = local.thanos["bucket_force_destroy"]
 
   bucket = local.thanos["bucket"]
   acl    = "private"
+
+  versioning = {
+    status = true
+  }
 
   server_side_encryption_configuration = {
     rule = {
@@ -286,6 +289,14 @@ module "thanos_bucket" {
       }
     }
   }
+
+  logging = local.s3-logging.enabled ? {
+    target_bucket = local.s3-logging.create_bucket ? module.s3_logging_bucket.s3_bucket_id : local.s3-logging.custom_bucket_id
+    target_prefix = "${var.cluster-name}/${local.thanos.name}/"
+  } : {}
+
+  attach_deny_insecure_transport_policy = local.thanos["bucket_enforce_tls"]
+
   tags = local.tags
 }
 
@@ -356,6 +367,7 @@ resource "tls_self_signed_cert" "thanos-tls-querier-ca-cert" {
   }
 
   validity_period_hours = 87600
+  early_renewal_hours   = 720
 
   allowed_uses = [
     "cert_signing"

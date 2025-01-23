@@ -24,22 +24,17 @@ locals {
   values_loki-stack = <<-VALUES
     global
       dnsService: coredns
-    monitoring:
-      lokiCanary:
-        enabled: false    
-      selfMonitoring:
-        enabled: false
-        grafanaAgent:
-          installOperator: false
     serviceMonitor:
       enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
+    gateway:
+      service:
+        labels:
+          prometheus.io/service-monitor: "false"
     priorityClassName: ${local.priority-class["create"] ? kubernetes_priority_class.kubernetes_addons[0].metadata[0].name : ""}
     persistence:
       enabled: true
     loki:
       auth_enabled: false
-      compactor:
-        shared_store: aws
       storage:
         bucketNames:
           chunks: "${local.loki-stack["bucket"]}"
@@ -63,8 +58,6 @@ locals {
           region: ${local.loki-stack["bucket_region"]}
           access_key_id: ${local.scaleway["scw_access_key"]}
           secret_access_key: ${local.scaleway["scw_secret_key"]}
-        boltdb_shipper:
-          shared_store: aws
     VALUES
 }
 
@@ -244,7 +237,12 @@ resource "kubernetes_secret" "loki-stack-ca" {
 resource "scaleway_object_bucket" "loki_bucket" {
   count = local.loki-stack["enabled"] && local.loki-stack["create_bucket"] ? 1 : 0
   name  = local.loki-stack["bucket"]
-  acl   = "private"
+}
+
+resource "scaleway_object_bucket_acl" "loki_bucket_acl" {
+  count  = local.loki-stack["enabled"] && local.loki-stack["create_bucket"] ? 1 : 0
+  bucket = scaleway_object_bucket.loki_bucket.0.id
+  acl    = "private"
 }
 
 resource "tls_private_key" "promtail-key" {

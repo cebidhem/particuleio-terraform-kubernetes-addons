@@ -11,13 +11,18 @@ locals {
       enabled                = false
       default_network_policy = true
       ingress_cidrs          = ["0.0.0.0/0"]
+      linkerd-viz-enabled    = false
+      linkerd-viz-namespace  = "linkerd-viz"
       allowed_cidrs          = ["0.0.0.0/0"]
+      extra_ns_labels        = {}
+      extra_ns_annotations   = {}
     },
     var.ingress-nginx
   )
 
   values_ingress-nginx = <<VALUES
 controller:
+  allowSnippetAnnotations: true
   metrics:
     enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
     serviceMonitor:
@@ -40,10 +45,15 @@ resource "kubernetes_namespace" "ingress-nginx" {
   count = local.ingress-nginx["enabled"] ? 1 : 0
 
   metadata {
-    labels = {
+    labels = merge({
       name                               = local.ingress-nginx["namespace"]
       "${local.labels_prefix}/component" = "ingress"
-    }
+      },
+    local.ingress-nginx["extra_ns_labels"])
+
+    annotations = merge(
+      local.ingress-nginx["extra_ns_annotations"]
+    )
 
     name = local.ingress-nginx["namespace"]
   }
@@ -222,6 +232,32 @@ resource "kubernetes_network_policy" "ingress-nginx_allow_control_plane" {
         content {
           ip_block {
             cidr = from.value
+          }
+        }
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+}
+
+resource "kubernetes_network_policy" "ingress-nginx_allow_linkerd_viz" {
+  count = local.ingress-nginx["enabled"] && (local.linkerd-viz["enabled"] || local.ingress-nginx["linkerd-viz-enabled"]) && local.ingress-nginx["default_network_policy"] ? 1 : 0
+
+  metadata {
+    name      = "${kubernetes_namespace.ingress-nginx.*.metadata.0.name[count.index]}-allow-linkerd-viz"
+    namespace = kubernetes_namespace.ingress-nginx.*.metadata.0.name[count.index]
+  }
+
+  spec {
+    pod_selector {
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            name = local.linkerd-viz["enabled"] ? local.linkerd-viz["namespace"] : local.ingress-nginx["linkerd-viz-namespace"]
           }
         }
       }

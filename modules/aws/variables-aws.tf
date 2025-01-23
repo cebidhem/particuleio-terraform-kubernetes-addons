@@ -40,12 +40,6 @@ variable "aws-node-termination-handler" {
   default     = {}
 }
 
-variable "calico" {
-  description = "Customize calico helm chart, see `calico.tf`"
-  type        = any
-  default     = {}
-}
-
 variable "cni-metrics-helper" {
   description = "Customize cni-metrics-helper deployment, see `cni-metrics-helper.tf` for supported values"
   type        = any
@@ -58,8 +52,20 @@ variable "eks" {
   default     = {}
 }
 
+variable "karpenter" {
+  description = "Customize karpenter chart, see `karpenter.tf` for supported values"
+  type        = any
+  default     = {}
+}
+
 variable "prometheus-cloudwatch-exporter" {
   description = "Customize prometheus-cloudwatch-exporter chart, see `prometheus-cloudwatch-exporter.tf` for supported values"
+  type        = any
+  default     = {}
+}
+
+variable "s3-logging" {
+  description = "Logging configuration for bucket created by this module"
   type        = any
   default     = {}
 }
@@ -76,8 +82,8 @@ variable "tags" {
   default     = {}
 }
 
-variable "velero" {
-  description = "Customize velero chart, see `velero.tf` for supported values"
+variable "yet-another-cloudwatch-exporter" {
+  description = "Customize yet-another-cloudwatch-exporter chart, see `yet-another-cloudwatch-exporter.tf` for supported values"
   type        = any
   default     = {}
 }

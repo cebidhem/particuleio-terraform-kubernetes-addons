@@ -25,6 +25,7 @@ locals {
       sg_egress_ipv6_cidr_blocks                     = null
       sg_auto_ingress_with_self                      = []
       sg_input_ingress_with_source_security_group_id = []
+      subnets                                        = []
       name_prefix                                    = "${var.cluster-name}-aws-efs-csi-driver"
     },
     var.aws-efs-csi-driver
@@ -92,7 +93,7 @@ resource "aws_efs_file_system" "aws-efs-csi-driver" {
   encrypted                       = lookup(local.aws-efs-csi-driver, "encrypted", "true")
   performance_mode                = lookup(local.aws-efs-csi-driver, "performance_mode", "generalPurpose")
   provisioned_throughput_in_mibps = lookup(local.aws-efs-csi-driver, "provisioned_throughput_in_mibps", 0)
-  throughput_mode                 = lookup(local.aws-efs-csi-driver, "provisioned_throughput_in_mibps", 0) == 0 ? "bursting" : "provisioned"
+  throughput_mode                 = lookup(local.aws-efs-csi-driver, "throughput_mode", "bursting")
   dynamic "lifecycle_policy" {
     for_each = lookup(local.aws-efs-csi-driver, "lifecycle_policy", [])
     content {
@@ -113,7 +114,7 @@ resource "aws_efs_mount_target" "aws-efs-csi-driver" {
 module "security-group-efs-csi-driver" {
   count                                 = local.aws-efs-csi-driver["enabled"] ? 1 : 0
   source                                = "terraform-aws-modules/security-group/aws//modules/nfs"
-  version                               = "~> 4.0"
+  version                               = "~> 5.0"
   name                                  = local.aws-efs-csi-driver["name_prefix"]
   description                           = "NFS access to ${local.aws-efs-csi-driver["name_prefix"]}"
   vpc_id                                = local.aws-efs-csi-driver["sg_vpc_id"]

@@ -13,14 +13,19 @@ locals {
       use_l7                 = false
       enabled                = false
       default_network_policy = true
+      linkerd-viz-enabled    = false
+      linkerd-viz-namespace  = "linkerd-viz"
       ingress_cidrs          = ["0.0.0.0/0"]
       allowed_cidrs          = ["0.0.0.0/0"]
+      extra_ns_labels        = {}
+      extra_ns_annotations   = {}
     },
     var.ingress-nginx
   )
 
   values_ingress-nginx_l4 = <<VALUES
 controller:
+  allowSnippetAnnotations: true
   metrics:
     enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
     serviceMonitor:
@@ -45,6 +50,7 @@ VALUES
 
   values_ingress-nginx_nlb = <<VALUES
 controller:
+  allowSnippetAnnotations: true
   metrics:
     enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
     serviceMonitor:
@@ -54,8 +60,8 @@ controller:
   kind: "DaemonSet"
   service:
     annotations:
+      service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
       service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
-      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
       service.beta.kubernetes.io/aws-load-balancer-type: nlb
     externalTrafficPolicy: "Local"
   publishService:
@@ -69,6 +75,7 @@ VALUES
 
   values_ingress-nginx_nlb_ip = <<VALUES
 controller:
+  allowSnippetAnnotations: true
   metrics:
     enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
     serviceMonitor:
@@ -78,8 +85,8 @@ controller:
   kind: "DaemonSet"
   service:
     annotations:
+      service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
       service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
-      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
       service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
       service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
   publishService:
@@ -93,6 +100,7 @@ VALUES
 
   values_ingress-nginx_l7 = <<VALUES
 controller:
+  allowSnippetAnnotations: true
   metrics:
     enabled: ${local.kube-prometheus-stack["enabled"] || local.victoria-metrics-k8s-stack["enabled"]}
     serviceMonitor:
@@ -128,10 +136,15 @@ resource "kubernetes_namespace" "ingress-nginx" {
   count = local.ingress-nginx["enabled"] ? 1 : 0
 
   metadata {
-    labels = {
+    labels = merge({
       name                               = local.ingress-nginx["namespace"]
       "${local.labels_prefix}/component" = "ingress"
-    }
+      },
+    local.ingress-nginx["extra_ns_labels"])
+
+    annotations = merge(
+      local.ingress-nginx["extra_ns_annotations"]
+    )
 
     name = local.ingress-nginx["namespace"]
   }
@@ -310,6 +323,32 @@ resource "kubernetes_network_policy" "ingress-nginx_allow_control_plane" {
         content {
           ip_block {
             cidr = from.value
+          }
+        }
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+}
+
+resource "kubernetes_network_policy" "ingress-nginx_allow_linkerd_viz" {
+  count = local.ingress-nginx["enabled"] && (local.linkerd-viz["enabled"] || local.ingress-nginx["linkerd-viz-enabled"]) && local.ingress-nginx["default_network_policy"] ? 1 : 0
+
+  metadata {
+    name      = "${kubernetes_namespace.ingress-nginx.*.metadata.0.name[count.index]}-allow-linkerd-viz"
+    namespace = kubernetes_namespace.ingress-nginx.*.metadata.0.name[count.index]
+  }
+
+  spec {
+    pod_selector {
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            name = local.linkerd-viz["enabled"] ? local.linkerd-viz["namespace"] : local.ingress-nginx["linkerd-viz-namespace"]
           }
         }
       }

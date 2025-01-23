@@ -3,10 +3,10 @@ locals {
   thanos = merge(
     local.helm_defaults,
     {
-      name                    = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].name
-      chart                   = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].name
-      repository              = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].repository
-      chart_version           = local.helm_dependencies[index(local.helm_dependencies.*.name, "thanos")].version
+      name                    = "thanos"
+      chart                   = local.helm_dependencies[index(local.helm_dependencies.*.name, "oci://registry-1.docker.io/bitnamicharts/thanos")].name
+      repository              = ""
+      chart_version           = local.helm_dependencies[index(local.helm_dependencies.*.name, "oci://registry-1.docker.io/bitnamicharts/thanos")].version
       namespace               = "monitoring"
       iam_policy_override     = null
       create_ns               = false
@@ -211,7 +211,12 @@ locals {
 resource "scaleway_object_bucket" "thanos_bucket" {
   count = local.thanos["enabled"] && local.thanos["create_bucket"] ? 1 : 0
   name  = local.thanos["bucket"]
-  acl   = "private"
+}
+
+resource "scaleway_object_bucket_acl" "thanos_bucket_acl" {
+  count  = local.thanos["enabled"] && local.thanos["create_bucket"] ? 1 : 0
+  bucket = scaleway_object_bucket.thanos_bucket.0.id
+  acl    = "private"
 }
 
 resource "kubernetes_namespace" "thanos" {

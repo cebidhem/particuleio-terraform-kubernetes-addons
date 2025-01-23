@@ -40,12 +40,6 @@ variable "external-dns" {
   default     = {}
 }
 
-variable "flux" {
-  description = "Customize Flux chart, see `flux.tf` for supported values"
-  type        = any
-  default     = {}
-}
-
 variable "flux2" {
   description = "Customize Flux chart, see `flux2.tf` for supported values"
   type        = any
@@ -54,12 +48,6 @@ variable "flux2" {
 
 variable "helm_defaults" {
   description = "Customize default Helm behavior"
-  type        = any
-  default     = {}
-}
-
-variable "istio-operator" {
-  description = "Customize istio operator deployment, see `istio_operator.tf` for supported values"
   type        = any
   default     = {}
 }
@@ -82,12 +70,6 @@ variable "keda" {
   default     = {}
 }
 
-variable "keycloak" {
-  description = "Customize keycloak chart, see `keycloak.tf` for supported values"
-  type        = any
-  default     = {}
-}
-
 variable "kong" {
   description = "Customize kong-ingress chart, see `kong.tf` for supported values"
   type        = any
@@ -96,12 +78,6 @@ variable "kong" {
 
 variable "kube-prometheus-stack" {
   description = "Customize kube-prometheus-stack chart, see `kube-prometheus-stack.tf` for supported values"
-  type        = any
-  default     = {}
-}
-
-variable "kyverno" {
-  description = "Customize kyverno chart, see `kyverno.tf` for supported values"
   type        = any
   default     = {}
 }
@@ -126,6 +102,12 @@ variable "linkerd2-cni" {
 
 variable "linkerd-viz" {
   description = "Customize linkerd-viz chart, see `linkerd-viz.tf` for supported values"
+  type        = any
+  default     = {}
+}
+
+variable "linkerd" {
+  description = "Customize linkerd chart, see `linkerd.tf` for supported values"
   type        = any
   default     = {}
 }
@@ -184,12 +166,6 @@ variable "promtail" {
   default     = {}
 }
 
-variable "rabbitmq-operator" {
-  description = "Customize rabbitmq-operator chart, see `rabbitmq-operator.tf` for supported values"
-  type        = any
-  default     = {}
-}
-
 variable "sealed-secrets" {
   description = "Customize sealed-secrets chart, see `sealed-secrets.tf` for supported values"
   type        = any
@@ -198,12 +174,6 @@ variable "sealed-secrets" {
 
 variable "secrets-store-csi-driver" {
   description = "Customize secrets-store-csi-driver chart, see `secrets-store-csi-driver.tf` for supported values"
-  type        = any
-  default     = {}
-}
-
-variable "strimzi-kafka-operator" {
-  description = "Customize strimzi-kafka-operator chart, see `strimzi-kafka-operator.tf` for supported values"
   type        = any
   default     = {}
 }
@@ -232,6 +202,12 @@ variable "thanos-memcached" {
   default     = {}
 }
 
+variable "thanos-receive" {
+  description = "Customize thanos chart, see `thanos-receive.tf` for supported values"
+  type        = any
+  default     = {}
+}
+
 variable "tigera-operator" {
   description = "Customize tigera-operator chart, see `tigera-operator.tf` for supported values"
   type        = any
@@ -244,14 +220,26 @@ variable "traefik" {
   default     = {}
 }
 
-variable "vault" {
-  description = "Customize Hashicorp Vault chart, see `vault.tf` for supported values"
+variable "victoria-metrics-k8s-stack" {
+  description = "Customize Victoria Metrics chart, see `victoria-metrics-k8s-stack.tf` for supported values"
   type        = any
   default     = {}
 }
 
-variable "victoria-metrics-k8s-stack" {
-  description = "Customize Victoria Metrics chart, see `victoria-metrics-k8s-stack.tf` for supported values"
+variable "ip-masq-agent" {
+  description = "Configure ip masq agent chart, see `ip-masq-agent.tf` for supported values. This addon works only on GCP."
+  type        = any
+  default     = {}
+}
+
+variable "reloader" {
+  description = "Customize reloader chart, see `reloader.tf` for supported values"
+  type        = any
+  default     = {}
+}
+
+variable "velero" {
+  description = "Customize velero chart, see `velero.tf` for supported values"
   type        = any
   default     = {}
 }
