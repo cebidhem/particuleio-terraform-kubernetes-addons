@@ -15,9 +15,7 @@ locals {
   )
 
   values_grafana-mcp = <<VALUES
-grafana:
-  url: ${local.kube-prometheus-stack["enabled"]} ? http://kube-prometheus-stack-grafana : ''
-VALUES
+    VALUES
 }
 
 resource "kubernetes_namespace" "grafana-mcp" {
