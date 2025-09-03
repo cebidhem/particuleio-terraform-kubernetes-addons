@@ -7,7 +7,7 @@ locals {
       repository             = local.helm_dependencies[index(local.helm_dependencies.*.name, "grafana-mcp")].repository
       chart_version          = local.helm_dependencies[index(local.helm_dependencies.*.name, "grafana-mcp")].version
       namespace              = "telemetry"
-      create_ns              = true
+      create_ns              = false
       enabled                = false
       default_network_policy = true
     },
