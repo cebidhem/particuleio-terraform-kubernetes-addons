@@ -38,6 +38,15 @@ dependencies:
   - name: flux
     version: 1.13.3
     repository: https://charts.fluxcd.io
+  - name: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+    version: 1.1.1
+    repository: ""
+  - name: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance
+    version: 1.1.1
+    repository: ""
+  - name: grafana-mcp
+    version: 0.1.3
+    repository: https://grafana.github.io/helm-charts
   - name: ingress-nginx
     version: 4.12.3
     repository: https://kubernetes.github.io/ingress-nginx
